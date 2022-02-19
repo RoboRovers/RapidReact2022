@@ -1,3 +1,5 @@
+
+
 /*----------------------------------------------------------------------------*/
 /* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
@@ -9,10 +11,17 @@ package frc.robot;
 
 
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.motorcontrol.*;
-
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.networktables.*;
 
 /*
  * Your best friend: https://first.wpi.edu/FRC/roborio/release/docs/java/
@@ -53,30 +62,61 @@ import edu.wpi.first.wpilibj.motorcontrol.*;
  */
 public class Robot extends TimedRobot {
 
+  ADXRS450_Gyro gyro = new ADXRS450_Gyro();
+  PWMVictorSPX RightDriveMotor = new PWMVictorSPX(2); 
+  PWMVictorSPX LeftDriveMotor = new PWMVictorSPX(1);
+  DifferentialDrive RobotDrive = new DifferentialDrive(LeftDriveMotor,RightDriveMotor);
 
-  private final PWMVictorSPX LeftDriveMotor1 = new PWMVictorSPX(0); 
-  private final PWMVictorSPX LeftDriveMotor2 = new PWMVictorSPX(1);  
-  private final PWMVictorSPX RightDriveMotor1 = new PWMVictorSPX(2); 
-  private final PWMVictorSPX RightDriveMotor2 = new PWMVictorSPX(3);
-  private final MotorControllerGroup LeftMotors = new MotorControllerGroup(LeftDriveMotor1, LeftDriveMotor2);
-  private final MotorControllerGroup RightMotors = new MotorControllerGroup(RightDriveMotor1, RightDriveMotor2);
-  private final DifferentialDrive RobotDrive = new DifferentialDrive(LeftMotors,RightMotors);
-  private final Joystick Joystick1 = new Joystick(0);
+  //PWMVictorSPX Intake = new PWMVictorSPX(2);
+  Joystick Joystick1 = new Joystick(0);
   //intake, shooter, transfer
+  //private final AnalogInput ultrasonic = new AnalogInput(0);
+  Encoder encoder = new Encoder(0, 1);
+  NetworkTableEntry encoderEntry;
   @Override
   public void robotInit() {
-    
+    //NetworkTableInstance inst = NetworkTableInstance.getDefault();
+    //SmartDashboard.putString("test", "hello world");
+    Shuffleboard.getTab("gyro").add(gyro);
+    //System.out.print("started robot");
   }
 
   @Override
   public void teleopInit() {
-    
-    
+    encoder.reset();
+    encoder.setDistancePerPulse(1.0/236.0);
+    int encoderRawValue = encoder.getRaw();
+    SmartDashboard.putString("Encoder Raw", String.valueOf(encoderRawValue));
+    double encoderDistanceValue = encoder.getDistance();
+    SmartDashboard.putString("Encoder Distance", String.valueOf(encoderDistanceValue));
+    int encoderValue = encoder.get();
+    SmartDashboard.putString("Encoder", String.valueOf(encoderValue));
   }
 
   @Override
   public void teleopPeriodic() {
     RobotDrive.arcadeDrive((Joystick1.getY()), -(Joystick1.getX()));
+    /*
+    if (Joystick1.getRawButtonPressed(5)) {
+      Intake.set(-0.75);
+    }
+    if (Joystick1.getRawButtonReleased(5)) {
+      Intake.set(0);
+    }
+    double rawValue = ultrasonic.getValue();
+    double voltage_scale_factor = 5/RobotController.getVoltage5V();
+    double currentDistanceCentimeters = rawValue * voltage_scale_factor * 0.125;
+    */
+    
+    int encoderRawValue = encoder.getRaw();
+    SmartDashboard.putString("Encoder Raw", String.valueOf(encoderRawValue));
+    double encoderDistanceValue = encoder.getDistance();
+    SmartDashboard.putString("Encoder Distance", String.valueOf(encoderDistanceValue));
+    int encoderValue = encoder.get();
+    SmartDashboard.putString("Encoder", String.valueOf(encoderValue));
+
+    
+    
   }
   
   @Override
