@@ -1,5 +1,3 @@
-
-
 /*----------------------------------------------------------------------------*/
 /* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
@@ -11,17 +9,15 @@ package frc.robot;
 
 
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.motorcontrol.*;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.networktables.*;
+
+import com.revrobotics.ColorSensorV3;
+import edu.wpi.first.wpilibj.I2C;
 
 /*
  * Your best friend: https://first.wpi.edu/FRC/roborio/release/docs/java/
@@ -62,71 +58,257 @@ import edu.wpi.first.networktables.*;
  */
 public class Robot extends TimedRobot {
 
-  ADXRS450_Gyro gyro = new ADXRS450_Gyro();
-  PWMVictorSPX RightDriveMotor = new PWMVictorSPX(2); 
-  PWMVictorSPX LeftDriveMotor = new PWMVictorSPX(1);
-  DifferentialDrive RobotDrive = new DifferentialDrive(LeftDriveMotor,RightDriveMotor);
 
-  //PWMVictorSPX Intake = new PWMVictorSPX(2);
+  PWMVictorSPX LeftDriveMotor = new PWMVictorSPX(0); 
+  PWMVictorSPX RightDriveMotor = new PWMVictorSPX(1); 
+  DifferentialDrive RobotDrive = new DifferentialDrive(LeftDriveMotor,RightDriveMotor);
+  PWMVictorSPX intake = new PWMVictorSPX(2);
+  PWMVictorSPX LauncherFront = new PWMVictorSPX(3);
+  PWMVictorSPX LauncherBack = new PWMVictorSPX(4);
+  PWMVictorSPX Bumper1 = new PWMVictorSPX(5);
+  Encoder leftEncoder = new Encoder(0, 1);
+  Encoder rightEncoder = new Encoder(2, 3);
+  ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kOnboard);
+  boolean bumperRunning = false;
   Joystick Joystick1 = new Joystick(0);
+  Timer timer = new Timer();
+  int bumperRunningTicks = 0;
   //intake, shooter, transfer
-  //private final AnalogInput ultrasonic = new AnalogInput(0);
-  Encoder encoder = new Encoder(0, 1);
-  NetworkTableEntry encoderEntry;
   @Override
   public void robotInit() {
-    //NetworkTableInstance inst = NetworkTableInstance.getDefault();
-    //SmartDashboard.putString("test", "hello world");
-    Shuffleboard.getTab("gyro").add(gyro);
-    //System.out.print("started robot");
+    
   }
 
   @Override
   public void teleopInit() {
-    encoder.reset();
-    encoder.setDistancePerPulse(1.0/236.0);
-    int encoderRawValue = encoder.getRaw();
-    SmartDashboard.putString("Encoder Raw", String.valueOf(encoderRawValue));
-    double encoderDistanceValue = encoder.getDistance();
-    SmartDashboard.putString("Encoder Distance", String.valueOf(encoderDistanceValue));
-    int encoderValue = encoder.get();
-    SmartDashboard.putString("Encoder", String.valueOf(encoderValue));
+    leftEncoder.reset();
+    intake.set(0);
+    rightEncoder.reset();
+    SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
+    SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
+    SmartDashboard.putNumber("leftEncoderDistance", leftEncoder.get());
+    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get());
+    SmartDashboard.putNumber("Color Sensor Red reading", 0);
   }
 
   @Override
   public void teleopPeriodic() {
-    RobotDrive.arcadeDrive((Joystick1.getY()), -(Joystick1.getX()));
-    /*
+    SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
+    SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
+    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()/360.0*1.5707963268));
+    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()/360.0*1.5707963268);
+    SmartDashboard.putNumber("Color Sensor Red reading", colorSensor.getColor().red);
+    RobotDrive.arcadeDrive(-(Joystick1.getY()), (Joystick1.getX()));
+    
+    if (Joystick1.getRawButtonPressed(2)) {
+        intake.set(0.75);
+    }
+    if (Joystick1.getRawButtonReleased(2)) {
+        intake.set(0);
+    }
+    if (Joystick1.getRawButtonPressed(1)) {
+        intake.set(-0.75);
+    }
+    if (Joystick1.getRawButtonReleased(1)) {
+        intake.set(0);
+    }
+    if (Joystick1.getRawButtonPressed(3)) {
+        LauncherFront.set(0.80);
+        LauncherBack.set(-0.80);
+    }
+    if (Joystick1.getRawButtonReleased(3)) {
+        LauncherFront.set(0);
+        LauncherBack.set(0);
+    }
+    if (Joystick1.getRawButtonPressed(4)) {
+        LauncherFront.set(0.50);
+        LauncherBack.set(-0.50);
+    }
+    if (Joystick1.getRawButtonReleased(4)) {
+        LauncherFront.set(0);
+        LauncherBack.set(0);
+    }
     if (Joystick1.getRawButtonPressed(5)) {
-      Intake.set(-0.75);
+        LauncherFront.set(0.90);
+        LauncherBack.set(-0.90);
     }
     if (Joystick1.getRawButtonReleased(5)) {
-      Intake.set(0);
+        LauncherFront.set(0);
+        LauncherBack.set(0);
     }
-    double rawValue = ultrasonic.getValue();
-    double voltage_scale_factor = 5/RobotController.getVoltage5V();
-    double currentDistanceCentimeters = rawValue * voltage_scale_factor * 0.125;
-    */
-    
-    int encoderRawValue = encoder.getRaw();
-    SmartDashboard.putString("Encoder Raw", String.valueOf(encoderRawValue));
-    double encoderDistanceValue = encoder.getDistance();
-    SmartDashboard.putString("Encoder Distance", String.valueOf(encoderDistanceValue));
-    int encoderValue = encoder.get();
-    SmartDashboard.putString("Encoder", String.valueOf(encoderValue));
-
-    
-    
+    if (Joystick1.getRawButtonPressed(7)) {
+        Bumper1.set(-0.9);
+    }
+    if (Joystick1.getRawButtonReleased(7)) {
+        Bumper1.set(0);
+    }
+    if (Joystick1.getRawButtonPressed(9)) {
+        
+        if (!bumperRunning) {
+            bumperRunning = true;
+            bumperRunningTicks = 0;
+            Bumper1.set(-0.75);
+        }
+        else if (timer.get() > 1) {
+            
+            Bumper1.set(0);
+        }
+    }
+    if (Joystick1.getRawButtonReleased(9)) {
+        
+        
+            
+        Bumper1.set(0);
+        
+        timer.stop();
+        timer.reset();
+        bumperRunning = false;
+    }
+    if (Joystick1.getRawButtonPressed(11)) {
+        Bumper1.set(-1);
+    }
+    if (Joystick1.getRawButtonReleased(11)) {
+        Bumper1.set(0);
+    }
   }
+  
+  boolean DoingAuto = false;
+  boolean ShootingBall = false;
+  boolean TurningToBall = false;
+  boolean TaxingToBall = false;
+  boolean TaxingToHub = false;
+  boolean LeavingTarmac = false;
+  double ballAngleValue = 0;
+  
   
   @Override
   public void autonomousInit() {
-    
+    leftEncoder.reset();
+    rightEncoder.reset();
+    timer.reset();
+
+    int AutoNum = 0; //get from network table.
+    int BallNum = 0; //get from network table.
+    switch (AutoNum) {
+        default:
+            break;
+        case 1:
+            DoingAuto = true;
+            LeavingTarmac = true;
+            break;
+        case 2:
+            DoingAuto = true;
+            ShootingBall = true;
+            break;
+        case 3:
+            DoingAuto = true;
+            ShootingBall = true;
+            LeavingTarmac = true;
+            break;
+        case 4:
+            DoingAuto = true;
+            ShootingBall = true;
+            TurningToBall = true;
+            TaxingToBall = true;
+            TaxingToHub = true;
+            break;
+        
+    }
+    switch (BallNum) {
+        case 1:
+            ballAngleValue = 0;
+            break;
+        case 2:
+            ballAngleValue = 0;
+            break;
+        case 3:
+            ballAngleValue = 0;
+            break;
+    }
   }
 
   @Override
   public void autonomousPeriodic() {
+    SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
+    SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
+    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()/360.0*1.5707963268));
+    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()/360.0*1.5707963268);
     
+    if (DoingAuto) {
+        if (ShootingBall) {
+            if (timer.get() == 0) {
+                timer.start();
+                Bumper1.set(-0.75);
+                LauncherFront.set(0.85);
+                LauncherBack.set(-0.85);
+            }
+            else if (timer.get() > 1) {
+                LauncherFront.set(0);
+                LauncherBack.set(0);
+                Bumper1.set(0);
+                timer.stop();
+                timer.reset();
+                ShootingBall = false;
+            }
+        } 
+        else if (TurningToBall) {
+            if (timer.get() == 0) {
+                timer.start();
+                LeftDriveMotor.set(-0.4);
+            }
+            else if (leftEncoder.get()/360.0*1.5707963268 > ballAngleValue) {
+                LeftDriveMotor.set(0);
+                leftEncoder.reset();
+                rightEncoder.reset();
+                timer.stop();
+                timer.reset();
+                TurningToBall = false;
+            }
+            
+        }
+        else if (TaxingToBall) {
+            if (timer.get() == 0) {
+                timer.start();
+                RobotDrive.arcadeDrive(0.4, 0);
+                intake.set(0.75);
+            }
+            else if (leftEncoder.get()/360.0*1.5707963268 > 10) {
+                timer.stop();
+                timer.reset();
+                intake.set(0);
+                RobotDrive.arcadeDrive(0, 0);
+                TaxingToBall = false;
+            }
+        }
+        else if (TaxingToHub) {
+            if (timer.get() == 0) {
+                timer.start();
+                RobotDrive.arcadeDrive(-0.5, 0);
+
+            }
+            else if (leftEncoder.get()/360.0*1.5707963268 < -0.5) {
+                RobotDrive.arcadeDrive(0, 0);
+                timer.stop();
+                timer.reset();
+                TaxingToHub = false;
+                ShootingBall = true;
+            }
+
+        }
+        else if (LeavingTarmac) {
+            if (timer.get() == 0) {
+                timer.start();
+                RobotDrive.arcadeDrive(0.4, 0);
+            }
+            else if (leftEncoder.get()/360.0*1.5707963268 < 10) {
+                RobotDrive.arcadeDrive(0, 0);
+                timer.stop();
+                timer.reset();
+                LeavingTarmac = false;
+            }
+        }
+    }
+ 
   }
   
 }
