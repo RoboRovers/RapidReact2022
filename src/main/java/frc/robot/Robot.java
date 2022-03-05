@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.motorcontrol.*;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 import com.revrobotics.ColorSensorV3;
 import edu.wpi.first.wpilibj.I2C;
 
@@ -78,9 +77,11 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     
   }
-
+  final double DISTANCEMULTIPLIER = 1.5707963268/360.0;
   @Override
   public void teleopInit() {
+    timer.reset();
+    timer.start();
     leftEncoder.reset();
     intake.set(0);
     rightEncoder.reset();
@@ -88,16 +89,16 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
     SmartDashboard.putNumber("leftEncoderDistance", leftEncoder.get());
     SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get());
-    SmartDashboard.putNumber("Color Sensor Red reading", 0);
   }
 
   @Override
   public void teleopPeriodic() {
+    SmartDashboard.putNumber("timer", timer.get());
     SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
     SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
-    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()/360.0*1.5707963268));
-    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()/360.0*1.5707963268);
-    SmartDashboard.putNumber("Color Sensor Red reading", colorSensor.getColor().red);
+    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
+    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
+    SmartDashboard.putNumber("Color Sensor Proximity", colorSensor.getProximity());
     RobotDrive.arcadeDrive(-(Joystick1.getY()), (Joystick1.getX()));
     
     if (Joystick1.getRawButtonPressed(2)) {
@@ -175,6 +176,7 @@ public class Robot extends TimedRobot {
   boolean DoingAuto = false;
   boolean ShootingBall = false;
   boolean TurningToBall = false;
+  boolean DroppingIntake = false;
   boolean TaxingToBall = false;
   boolean TaxingToHub = false;
   boolean LeavingTarmac = false;
@@ -209,6 +211,7 @@ public class Robot extends TimedRobot {
             DoingAuto = true;
             ShootingBall = true;
             TurningToBall = true;
+            DroppingIntake = true;
             TaxingToBall = true;
             TaxingToHub = true;
             break;
@@ -226,13 +229,16 @@ public class Robot extends TimedRobot {
             break;
     }
   }
-
+  @Override
+  public void teleopExit() {
+      timer.stop();
+  }
   @Override
   public void autonomousPeriodic() {
     SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
     SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
-    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()/360.0*1.5707963268));
-    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()/360.0*1.5707963268);
+    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
+    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
     
     if (DoingAuto) {
         if (ShootingBall) {
@@ -256,7 +262,7 @@ public class Robot extends TimedRobot {
                 timer.start();
                 LeftDriveMotor.set(-0.4);
             }
-            else if (leftEncoder.get()/360.0*1.5707963268 > ballAngleValue) {
+            else if (leftEncoder.get()*DISTANCEMULTIPLIER > ballAngleValue) {
                 LeftDriveMotor.set(0);
                 leftEncoder.reset();
                 rightEncoder.reset();
@@ -266,13 +272,28 @@ public class Robot extends TimedRobot {
             }
             
         }
+        else if (DroppingIntake) {
+            if (timer.get() == 0) {
+                timer.start();
+                RobotDrive.arcadeDrive(-0.4, 0);
+            }
+            else if (timer.get() > 0.5 && timer.get() < 1) {
+                RobotDrive.arcadeDrive(0.4, 0);
+            }
+            else {
+                RobotDrive.arcadeDrive(0, 0);
+                timer.stop();
+                timer.reset();
+                DroppingIntake = false;
+            }
+        }
         else if (TaxingToBall) {
             if (timer.get() == 0) {
                 timer.start();
                 RobotDrive.arcadeDrive(0.4, 0);
                 intake.set(0.75);
             }
-            else if (leftEncoder.get()/360.0*1.5707963268 > 10) {
+            else if (leftEncoder.get()*DISTANCEMULTIPLIER > 10) {
                 timer.stop();
                 timer.reset();
                 intake.set(0);
@@ -286,7 +307,7 @@ public class Robot extends TimedRobot {
                 RobotDrive.arcadeDrive(-0.5, 0);
 
             }
-            else if (leftEncoder.get()/360.0*1.5707963268 < -0.5) {
+            else if (leftEncoder.get()*DISTANCEMULTIPLIER < -0.5) {
                 RobotDrive.arcadeDrive(0, 0);
                 timer.stop();
                 timer.reset();
@@ -300,7 +321,7 @@ public class Robot extends TimedRobot {
                 timer.start();
                 RobotDrive.arcadeDrive(0.4, 0);
             }
-            else if (leftEncoder.get()/360.0*1.5707963268 < 10) {
+            else if (leftEncoder.get()*DISTANCEMULTIPLIER < 10) {
                 RobotDrive.arcadeDrive(0, 0);
                 timer.stop();
                 timer.reset();
