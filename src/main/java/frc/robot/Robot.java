@@ -16,9 +16,14 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.motorcontrol.*;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import com.revrobotics.*;
 import com.revrobotics.ColorSensorV3;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 
@@ -69,14 +74,15 @@ public class Robot extends TimedRobot {
   PWMVictorSPX LauncherFront = new PWMVictorSPX(3);
   PWMVictorSPX LauncherBack = new PWMVictorSPX(4);
   PWMVictorSPX Bumper1 = new PWMVictorSPX(5);
+  PWMSparkMax Climber = new PWMSparkMax(6);
   Encoder leftEncoder = new Encoder(0, 1);
   Encoder rightEncoder = new Encoder(2, 3);
   ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kOnboard);
   boolean bumperRunning = false;
   Joystick Joystick1 = new Joystick(0);
+  XboxController xboxController1 = new XboxController(0);
   Timer timer = new Timer();
-  double lastTickJoystickX = 0.0;
-  double lastTickJoystickY = 0.0;
+
   
   Integer DoNothingAuto = 0;
   Integer OnlyLeaveTarmac = 1;
@@ -180,6 +186,14 @@ public class Robot extends TimedRobot {
     if (Joystick1.getRawButtonReleased(5)) {
         LauncherFront.set(0);
         LauncherBack.set(0);
+    }
+    if (Joystick1.getRawButtonPressed(6)) {
+        Climber.set(0.25);
+        SmartDashboard.putString("Climbing?", "yes");
+        SmartDashboard.putNumber("Climber Motor Value", Climber.get());
+    }
+    if (Joystick1.getRawButtonReleased(6)) {
+        Climber.set(0);
     }
     if (Joystick1.getRawButtonPressed(7)) {
         Bumper1.set(-0.9);
