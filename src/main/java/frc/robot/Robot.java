@@ -10,9 +10,6 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.VideoCamera;
-import edu.wpi.first.cscore.VideoSource;
-import edu.wpi.first.wpilibj.CAN;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -76,6 +73,7 @@ public class Robot extends TimedRobot {
   PWMVictorSPX LauncherFront = new PWMVictorSPX(3);
   PWMVictorSPX LauncherBack = new PWMVictorSPX(4);
   PWMVictorSPX Bumper1 = new PWMVictorSPX(5);
+  PWMVictorSPX IntakeRecliner = new PWMVictorSPX(7);
   CANSparkMax Climber = new CANSparkMax(1, MotorType.kBrushless);
   //PWMVictorSPX Climber = new PWMVictorSPX(9);
   Encoder leftEncoder = new Encoder(0, 1);
@@ -105,7 +103,7 @@ public class Robot extends TimedRobot {
   //intake, shooter, transfer
   @Override
   public void robotInit() {
-    Climber.setIdleMode(IdleMode.kBrake);
+    //Climber.setIdleMode(IdleMode.kBrake);
     CameraServer.startAutomaticCapture();
     AutoChooser.setDefaultOption("Do Nothing Option", DoNothingAuto);
     AutoChooser.addOption("Only leave tarmac", OnlyLeaveTarmac);
@@ -129,10 +127,10 @@ public class Robot extends TimedRobot {
     leftEncoder.reset();
     intake.set(0);
     rightEncoder.reset();
-    SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
-    SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
-    SmartDashboard.putNumber("leftEncoderDistance", leftEncoder.get());
-    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get());
+    //SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
+    //SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
+    //SmartDashboard.putNumber("leftEncoderDistance", leftEncoder.get());
+    //SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get());
   }
 
   @Override
@@ -144,17 +142,17 @@ public class Robot extends TimedRobot {
         SmartDashboard.putString("Bumper Position", "Not Down");
     }
     
-    SmartDashboard.putNumber("timer", timer.get());
-    SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
-    SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
-    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
-    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
-    SmartDashboard.putNumber("Color Sensor Proximity", colorSensor.getProximity());
+    //SmartDashboard.putNumber("timer", timer.get());
+    //SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
+    //SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
+    //SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
+    //SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
+    //SmartDashboard.putNumber("Color Sensor Proximity", colorSensor.getProximity());
     
     //RobotDrive.arcadeDrive(0.9, 0);
     RobotDrive.arcadeDrive(reverseConstant * -(Joystick1.getY()), reverseConstant * Joystick1.getX());
-    SmartDashboard.putNumber("Controller Y", -Joystick1.getY());
-    SmartDashboard.putNumber("Controller X", Joystick1.getX());
+    //SmartDashboard.putNumber("Controller Y", -Joystick1.getY());
+    //SmartDashboard.putNumber("Controller X", Joystick1.getX());
     
     if (Joystick1.getRawButtonPressed(2)) {
         intake.set(0.75);
@@ -173,6 +171,12 @@ public class Robot extends TimedRobot {
     }
     if (Joystick1.getRawButtonReleased(11)) {
         
+    }
+    if (Joystick1.getRawButtonPressed(12)) {
+        IntakeRecliner.set(-0.4);
+    }
+    if (Joystick1.getRawButtonReleased(12)) {
+        IntakeRecliner.set(0);
     }
     if (xboxController1.getRawButtonPressed(5)) {
         LauncherFront.set(0.50);
@@ -241,30 +245,31 @@ public class Robot extends TimedRobot {
     int AutoNum = AutoChooser.getSelected();
     switch (AutoNum) {
         default:
-        SmartDashboard.putNumber("autoSelected", 0);
+        //SmartDashboard.putNumber("autoSelected", 0);
             break;
         case 1:
-        SmartDashboard.putNumber("autoSelected", 1);
+        //SmartDashboard.putNumber("autoSelected", 1);
             DoingAuto = true;
             LeavingTarmac = true;
             break;
         case 2:
-        SmartDashboard.putNumber("autoSelected", 2);
+        //SmartDashboard.putNumber("autoSelected", 2);
             DoingAuto = true;
             ShootingBall = true;
             break;
         case 3:
-        SmartDashboard.putNumber("autoSelected", 3);
+        //SmartDashboard.putNumber("autoSelected", 3);
             DoingAuto = true;
             ShootingBall = true;
             LeavingTarmac = true;
             break;
         case 4:
-        SmartDashboard.putNumber("autoSelected", 4);
+        //SmartDashboard.putNumber("autoSelected", 4);
             DoingAuto = true;
             ShootingBall = true;
             TurningToBall = true;
             TaxingToBall = true;
+            TurningToTarmac = true;
             TaxingToTarmac = true;
             break;
         
@@ -272,17 +277,17 @@ public class Robot extends TimedRobot {
     int BallNum = BallChooser.getSelected();
     switch (BallNum) {
         case 1:
-            SmartDashboard.putString("Ball Chosen", "A");
+            //SmartDashboard.putString("Ball Chosen", "A");
             ballAngleValue = -65;
             break;
         case 2:
-        SmartDashboard.putString("Ball Chosen", "B");
+        //SmartDashboard.putString("Ball Chosen", "B");
             ballAngleValue = -300;
             TurningToHub = true;
             TaxingToHub = true;
             break;
         case 3:
-        SmartDashboard.putString("Ball Chosen", "C");
+        //SmartDashboard.putString("Ball Chosen", "C");
             ballAngleValue = 65;
             break;
     }
@@ -295,11 +300,11 @@ public class Robot extends TimedRobot {
   }
   @Override
   public void autonomousPeriodic() {
-    SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
-    SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
-    SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
-    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
-    SmartDashboard.putNumber("timer", timer.get());
+    //SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
+    //SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
+    //SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
+    //SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
+    //SmartDashboard.putNumber("timer", timer.get());
     if (DoingAuto) {
         if (ShootingBall) {
             SmartDashboard.putString("Current Task", "Shooting");
@@ -389,11 +394,19 @@ public class Robot extends TimedRobot {
             }
         }
         else if (TurningToTarmac) {
-            SmartDashboard.putString("Current Task", "Turning to hub");
+            double hubAngleValue;
+            if (ballAngleValue < 0) {
+                hubAngleValue = -1 * (ballAngleValue + 15);
+            }
+            else {
+                hubAngleValue = -1 * (ballAngleValue - 15);
+            }
+            SmartDashboard.putString("Current Task", "Turning to tarmac");
             if (timer.get() == 0) {
                 timer.start();
                 leftEncoder.reset();
                 rightEncoder.reset();
+                
                 
                 
             }
@@ -401,10 +414,10 @@ public class Robot extends TimedRobot {
                 leftEncoder.reset();
                 rightEncoder.reset();
             }
-            else if (ballAngleValue > 0 && rightEncoder.get() > -ballAngleValue) {
+            else if (hubAngleValue > 0 && rightEncoder.get() < hubAngleValue) {
                 RobotDrive.arcadeDrive(0, 0.5);
             }
-            else if (ballAngleValue < 0 && rightEncoder.get() < -ballAngleValue) {
+            else if (hubAngleValue < 0 && rightEncoder.get() > hubAngleValue) {
                 RobotDrive.arcadeDrive(0, -0.5);
             }
             else if (rightEncoder.get() < -10) {
@@ -417,7 +430,7 @@ public class Robot extends TimedRobot {
             
         }
         else if (TaxingToTarmac) {
-            SmartDashboard.putString("Current Task", "Taxing to Hub");
+            SmartDashboard.putString("Current Task", "Taxing to tarmac");
             if (timer.get() == 0) {
                 timer.start();
                 RobotDrive.arcadeDrive(-0.6, 0);
@@ -477,7 +490,7 @@ public class Robot extends TimedRobot {
                 timer.start();
                 RobotDrive.arcadeDrive(0.6, 0);
             }
-            else if (leftEncoder.get()*DISTANCEMULTIPLIER < 10) {
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 10) {
                 RobotDrive.arcadeDrive(0, 0);
                 timer.stop();
                 timer.reset();
