@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.VideoCamera;
 import edu.wpi.first.cscore.VideoSource;
+import edu.wpi.first.wpilibj.CAN;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -22,6 +23,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import com.revrobotics.*;
 import com.revrobotics.ColorSensorV3;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.I2C;
@@ -74,16 +76,17 @@ public class Robot extends TimedRobot {
   PWMVictorSPX LauncherFront = new PWMVictorSPX(3);
   PWMVictorSPX LauncherBack = new PWMVictorSPX(4);
   PWMVictorSPX Bumper1 = new PWMVictorSPX(5);
-  PWMSparkMax Climber = new PWMSparkMax(6);
+  CANSparkMax Climber = new CANSparkMax(1, MotorType.kBrushless);
+  //PWMVictorSPX Climber = new PWMVictorSPX(9);
   Encoder leftEncoder = new Encoder(0, 1);
   Encoder rightEncoder = new Encoder(2, 3);
   ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kOnboard);
   boolean bumperRunning = false;
   Joystick Joystick1 = new Joystick(0);
-  XboxController xboxController1 = new XboxController(0);
+  XboxController xboxController1 = new XboxController(1);
   Timer timer = new Timer();
 
-  
+  int reverseConstant = 1;
   Integer DoNothingAuto = 0;
   Integer OnlyLeaveTarmac = 1;
   Integer OnlyShootBall = 2;
@@ -102,6 +105,8 @@ public class Robot extends TimedRobot {
   //intake, shooter, transfer
   @Override
   public void robotInit() {
+    Climber.setIdleMode(IdleMode.kBrake);
+    CameraServer.startAutomaticCapture();
     AutoChooser.setDefaultOption("Do Nothing Option", DoNothingAuto);
     AutoChooser.addOption("Only leave tarmac", OnlyLeaveTarmac);
     AutoChooser.addOption("Only shoot 1st ball", OnlyShootBall);
@@ -147,7 +152,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Color Sensor Proximity", colorSensor.getProximity());
     
     //RobotDrive.arcadeDrive(0.9, 0);
-    RobotDrive.arcadeDrive(-(Joystick1.getY()), Joystick1.getX());
+    RobotDrive.arcadeDrive(reverseConstant * -(Joystick1.getY()), reverseConstant * Joystick1.getX());
     SmartDashboard.putNumber("Controller Y", -Joystick1.getY());
     SmartDashboard.putNumber("Controller X", Joystick1.getX());
     
@@ -163,63 +168,52 @@ public class Robot extends TimedRobot {
     if (Joystick1.getRawButtonReleased(1)) {
         intake.set(0);
     }
-    if (Joystick1.getRawButtonPressed(3)) {
-        LauncherFront.set(0.80);
-        LauncherBack.set(-0.80);
+    if (Joystick1.getRawButtonPressed(11)) {
+        reverseConstant *= -1;
     }
-    if (Joystick1.getRawButtonReleased(3)) {
-        LauncherFront.set(0);
-        LauncherBack.set(0);
+    if (Joystick1.getRawButtonReleased(11)) {
+        
     }
-    if (Joystick1.getRawButtonPressed(4)) {
+    if (xboxController1.getRawButtonPressed(5)) {
         LauncherFront.set(0.50);
         LauncherBack.set(-0.50);
     }
-    if (Joystick1.getRawButtonReleased(4)) {
+    if (xboxController1.getRawButtonReleased(5)) {
         LauncherFront.set(0);
         LauncherBack.set(0);
     }
-    if (Joystick1.getRawButtonPressed(5)) {
+    if (xboxController1.getRawButtonPressed(7)) {
         LauncherFront.set(0.90);
         LauncherBack.set(-0.90);
     }
-    if (Joystick1.getRawButtonReleased(5)) {
+    if (xboxController1.getRawButtonReleased(7)) {
         LauncherFront.set(0);
         LauncherBack.set(0);
     }
-    if (Joystick1.getRawButtonPressed(6)) {
-        Climber.set(0.25);
-        SmartDashboard.putString("Climbing?", "yes");
-        SmartDashboard.putNumber("Climber Motor Value", Climber.get());
+    if (xboxController1.getRawButtonPressed(4)) {
+        Climber.set(1);
     }
-    if (Joystick1.getRawButtonReleased(6)) {
+    if (xboxController1.getRawButtonReleased(4)) {
         Climber.set(0);
     }
-    if (Joystick1.getRawButtonPressed(7)) {
+    if (xboxController1.getRawButtonPressed(2)) {
+        Climber.set(-1);
+    }
+    if (xboxController1.getRawButtonReleased(2)) {
+        Climber.set(0);
+    }
+    if (xboxController1.getRawButtonPressed(8)) {
         Bumper1.set(-0.9);
     }
-    if (Joystick1.getRawButtonReleased(7)) {
+    if (xboxController1.getRawButtonReleased(8)) {
         Bumper1.set(0);
     }
-    if (Joystick1.getRawButtonPressed(9)) {
+    if (xboxController1.getRawButtonPressed(6)) {
       Bumper1.set(0.25);
     }
-    if (Joystick1.getRawButtonReleased(9)) {
-        
-        
-            
+    if (xboxController1.getRawButtonReleased(6)) {
         Bumper1.set(0);
-        
-        timer.stop();
-        timer.reset();
-        bumperRunning = false;
-    }
-    if (Joystick1.getRawButtonPressed(11)) {
-        Bumper1.set(-1);
-    }
-    if (Joystick1.getRawButtonReleased(11)) {
-        Bumper1.set(0);
-    }
+      }
   }
   
   boolean DoingAuto = false;
@@ -227,6 +221,8 @@ public class Robot extends TimedRobot {
   boolean TurningToBall = false;
   boolean DroppingIntake = false;
   boolean TaxingToBall = false;
+  boolean TurningToTarmac = false;
+  boolean TaxingToTarmac = false;
   boolean TurningToHub = false;
   boolean TaxingToHub = false;
   boolean LeavingTarmac = false;
@@ -265,11 +261,11 @@ public class Robot extends TimedRobot {
             break;
         case 4:
         SmartDashboard.putNumber("autoSelected", 4);
-            //DoingAuto = true;
-            //ShootingBall = true;
-            //TurningToBall = true;
-            //TaxingToBall = true;
-            TaxingToHub = true;
+            DoingAuto = true;
+            ShootingBall = true;
+            TurningToBall = true;
+            TaxingToBall = true;
+            TaxingToTarmac = true;
             break;
         
     }
@@ -282,6 +278,8 @@ public class Robot extends TimedRobot {
         case 2:
         SmartDashboard.putString("Ball Chosen", "B");
             ballAngleValue = -300;
+            TurningToHub = true;
+            TaxingToHub = true;
             break;
         case 3:
         SmartDashboard.putString("Ball Chosen", "C");
@@ -351,7 +349,7 @@ public class Robot extends TimedRobot {
                 timer.start();
                 leftEncoder.reset();
                 rightEncoder.reset();
-                RobotDrive.arcadeDrive(0, -0.4);
+                //RobotDrive.arcadeDrive(0, -0.4);
                 
             }
             else if (ballAngleValue > 0 && rightEncoder.get() < ballAngleValue) {
@@ -390,7 +388,7 @@ public class Robot extends TimedRobot {
                 TaxingToBall = false;
             }
         }
-        else if (TurningToHub) {
+        else if (TurningToTarmac) {
             SmartDashboard.putString("Current Task", "Turning to hub");
             if (timer.get() == 0) {
                 timer.start();
@@ -414,11 +412,11 @@ public class Robot extends TimedRobot {
                 
                 timer.stop();
                 timer.reset();
-                TurningToHub = false;
+                TurningToTarmac = false;
             }
             
         }
-        else if (TaxingToHub) {
+        else if (TaxingToTarmac) {
             SmartDashboard.putString("Current Task", "Taxing to Hub");
             if (timer.get() == 0) {
                 timer.start();
@@ -433,8 +431,44 @@ public class Robot extends TimedRobot {
                 RobotDrive.arcadeDrive(0, 0);
                 timer.stop();
                 timer.reset();
-                TaxingToHub = false;
+                TaxingToTarmac = false;
                 ShootingBall = true;
+            }
+        }
+        else if (TurningToHub) {
+            SmartDashboard.putString("Current Task", "Turning");
+            if (timer.get() == 0) {
+                timer.start();
+                leftEncoder.reset();
+                rightEncoder.reset();
+                
+                
+            }
+            else if (rightEncoder.get() < 300) {
+                RobotDrive.arcadeDrive(0, -0.5);
+            }
+            else {
+                RobotDrive.arcadeDrive(0, 0);
+                
+                timer.stop();
+                timer.reset();
+                TurningToHub = false;
+            }
+        }
+        else if (TaxingToHub) {
+            SmartDashboard.putString("Current Task", "taxing to hub");
+            if (timer.get() == 0) {
+                leftEncoder.reset();
+                rightEncoder.reset();
+                timer.start();
+            }
+            else if (rightEncoder.get() * DISTANCEMULTIPLIER > -0.5) {
+                RobotDrive.arcadeDrive(-0.4, 0);
+            }
+            else {
+                timer.stop();
+                timer.reset();
+                TaxingToHub = false;
             }
         }
         else if (LeavingTarmac) {
