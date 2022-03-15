@@ -90,6 +90,8 @@ public class Robot extends TimedRobot {
   Integer OnlyShootBall = 2;
   Integer ShootAndLeaveTarmac = 3;
   Integer Shoot2Balls = 4;
+  Integer Shoot3Balls = 5;
+  Integer Shoot4Balls = 6;
   Integer BallA = 1;
   Integer BallB = 2;
   Integer BallC = 3;
@@ -231,8 +233,14 @@ public class Robot extends TimedRobot {
   boolean TaxingToHub = false;
   boolean LeavingTarmac = false;
   boolean FixingBumper = false;
-  double ballAngleValue = 0;
-  
+  boolean TurningToBall2 = false;
+  boolean TaxingToBall2 = false;
+  boolean TurningToHub2 = false;
+  boolean TaxingToTarmac2 = false;
+  double hubAngleValue = 0;
+  int AutoNum = 0;
+    
+  int ballsShot = 0;
   @Override
   public void autonomousInit() {
     
@@ -242,7 +250,7 @@ public class Robot extends TimedRobot {
     timer.stop();
     timer.reset();
 
-    int AutoNum = AutoChooser.getSelected();
+    AutoChooser.getSelected();
     switch (AutoNum) {
         default:
         //SmartDashboard.putNumber("autoSelected", 0);
@@ -265,48 +273,60 @@ public class Robot extends TimedRobot {
             break;
         case 4:
         //SmartDashboard.putNumber("autoSelected", 4);
+            DroppingIntake = true;
             DoingAuto = true;
-            ShootingBall = true;
-            TurningToBall = true;
+            TurningToHub = true;
             TaxingToBall = true;
-            TurningToTarmac = true;
-            TaxingToTarmac = true;
+            TurningToHub = true;
+            break;
+        case 5:
+            DroppingIntake = true;
+            DoingAuto = true;
+            TurningToHub = true;
+            TaxingToBall = true;
+            TurningToHub = true;
+            TurningToBall2 = true;
+            TaxingToBall2 = true;
+            TaxingToBall2 = true;
+            TurningToHub2 = true;
+            TaxingToTarmac2 = true;
             break;
         
     }
+      
+    ballsShot = 0;
     int BallNum = BallChooser.getSelected();
     switch (BallNum) {
         case 1:
             //SmartDashboard.putString("Ball Chosen", "A");
-            ballAngleValue = -65;
+            hubAngleValue = 50;
             break;
         case 2:
         //SmartDashboard.putString("Ball Chosen", "B");
-            ballAngleValue = -300;
+            hubAngleValue = 250;
             TurningToTarmac = false;
             TurningToHub = true;
             //TaxingToHub = true;
             break;
         case 3:
         //SmartDashboard.putString("Ball Chosen", "C");
-            ballAngleValue = 65;
+            hubAngleValue = -50;
             break;
     }
     
   }
-  
-  @Override
-  public void teleopExit() {
-      timer.stop();
-  }
+
   @Override
   public void autonomousPeriodic() {
     //SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
     //SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
     //SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
-    //SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
-    //SmartDashboard.putNumber("timer", timer.get());
-    if (DoingAuto) {
+    SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
+    SmartDashboard.putNumber("timer", timer.get());
+    if (AutoNum == 0) {
+
+    }
+    else if  (AutoNum < 4) {
         if (ShootingBall) {
             SmartDashboard.putString("Current Task", "Shooting");
             if (timer.get() == 0) {
@@ -315,24 +335,81 @@ public class Robot extends TimedRobot {
                 LauncherFront.set(0.8);
                 LauncherBack.set(-0.8);
                 
+                
             }
             else if (timer.get() > 1 && timer.get() < 1.5) {
                 Bumper1.set(-0.75);
             }
-            else if (timer.get() > 1.5 && timer.get() < 2.5) {
+            else if (timer.get() > 3) {
                 LauncherFront.set(0);
                 LauncherBack.set(0);
                 Bumper1.set(0);
-                RobotDrive.arcadeDrive(0.4, 0);
-            }
-            else if (timer.get() > 2.5 && timer.get() < 3) {
-                RobotDrive.arcadeDrive(0, 0);
-                
-            }
-            else if (timer.get() > 3) {
                 timer.stop();
                 timer.reset();
+                
+                
+                
                 ShootingBall = false;
+                
+                
+                if (colorSensor.getProximity() != 2047) {
+                    FixingBumper = true;
+                }
+            }
+        }
+        else if (FixingBumper) {
+            if (colorSensor.getProximity() == 2047) {
+                FixingBumper = false;
+            }
+            else if (colorSensor.getProximity() > 100 && colorSensor.getProximity() < 200) {
+                Bumper1.set(0);
+            }
+            else if (colorSensor.getProximity() < 100) {
+                Bumper1.set(0.1);
+            }
+        }
+        else if (LeavingTarmac) {
+            if (timer.get() == 0) {
+                timer.start();
+                RobotDrive.arcadeDrive(0.4, 0);
+            }
+            else if (timer.get() < 3) {
+                RobotDrive.arcadeDrive(0.4, 0);
+            }
+            else {
+                timer.stop();
+                timer.reset();
+                RobotDrive.arcadeDrive(0, 0);
+                LeavingTarmac = false;
+            }
+        }
+    }
+    else if (AutoNum == 4) {
+        if (ShootingBall) {
+            SmartDashboard.putString("Current Task", "Shooting");
+            if (timer.get() == 0) {
+                timer.start();
+                //Bumper1.set(-0.75);
+                LauncherFront.set(0.8);
+                LauncherBack.set(-0.8);
+                
+                
+            }
+            else if (timer.get() > 1 && timer.get() < 1.5) {
+                Bumper1.set(-0.75);
+            }
+            else if (timer.get() > 3) {
+                LauncherFront.set(0);
+                LauncherBack.set(0);
+                Bumper1.set(0);
+                timer.stop();
+                timer.reset();
+                
+                
+                
+                ShootingBall = false;
+                
+                
                 if (colorSensor.getProximity() != 2047) {
                     FixingBumper = true;
                 }
@@ -349,125 +426,50 @@ public class Robot extends TimedRobot {
                 Bumper1.set(0.1);
             }
         }
-        else if (TurningToBall) {
-            SmartDashboard.putString("Current Task", "Turning");
+        else if (DroppingIntake) {
             if (timer.get() == 0) {
                 timer.start();
-                leftEncoder.reset();
-                rightEncoder.reset();
-                //RobotDrive.arcadeDrive(0, -0.4);
-                
+
             }
-            else if (ballAngleValue > 0 && rightEncoder.get() < ballAngleValue) {
-                RobotDrive.arcadeDrive(0, -0.5);
+            else if (timer.get() < 0.5) {
+                RobotDrive.arcadeDrive(0.1, 0);
             }
-            else if (ballAngleValue < 0 && rightEncoder.get() > ballAngleValue) {
-                RobotDrive.arcadeDrive(0, 0.5);
+            else if (timer.get() > 1.5) {
+                DroppingIntake = false;
             }
-            else {
-                RobotDrive.arcadeDrive(0, 0);
-                
-                timer.stop();
-                timer.reset();
-                TurningToBall = false;
-            }
-            
         }
-        else if (TaxingToBall && ballAngleValue != 65) {
+        
+        else if (TaxingToBall) {
             SmartDashboard.putString("Current Task", "Taxing to Ball");
-            if (timer.get() == 0) {
+            if (rightEncoder.get()*DISTANCEMULTIPLIER < 3.5) {
                 timer.start();
-                RobotDrive.arcadeDrive(0.6, 0);
-                intake.set(-0.75);
+                intake.set(0.75);
+                RobotDrive.arcadeDrive(0.4, 0);
             }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 7) {
-                RobotDrive.arcadeDrive(0.6, 0);
-            }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 8) {
-                RobotDrive.arcadeDrive(0.3, 0);
-            }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER >= 8) {
+
+            else {
                 timer.stop();
                 timer.reset();
                 intake.set(0);
                 RobotDrive.arcadeDrive(0, 0);
                 TaxingToBall = false;
             }
-        }
-        else if (TaxingToBall && ballAngleValue == 65) {
-            SmartDashboard.putString("Current Task", "Taxing to Ball");
-            if (timer.get() == 0) {
-                timer.start();
-                RobotDrive.arcadeDrive(0.6, 0);
-                intake.set(-0.75);
-            }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 5) {
-                RobotDrive.arcadeDrive(0.6, 0);
-            }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 6) {
-                RobotDrive.arcadeDrive(0.3, 0);
-            }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER >= 6) {
-                timer.stop();
-                timer.reset();
-                intake.set(0);
-                RobotDrive.arcadeDrive(0, 0);
-                TaxingToBall = false;
-            }
-        }
-        else if (TurningToTarmac) {
-            double hubAngleValue;
-            if (ballAngleValue < 0) {
-                hubAngleValue = -1 * (ballAngleValue + 15);
-            }
-            else {
-                hubAngleValue = -1 * (ballAngleValue - 15);
-            }
-            SmartDashboard.putString("Current Task", "Turning to tarmac");
-            if (timer.get() == 0) {
-                timer.start();
-                leftEncoder.reset();
-                rightEncoder.reset();
-                
-                
-                
-            }
-            else if (timer.get() < 1) {
-                leftEncoder.reset();
-                rightEncoder.reset();
-            }
-            else if (hubAngleValue > 0 && rightEncoder.get() < hubAngleValue) {
-                RobotDrive.arcadeDrive(0, -0.5);
-            }
-            else if (hubAngleValue < 0 && rightEncoder.get() > hubAngleValue) {
-                RobotDrive.arcadeDrive(0, 0.5);
-            }
-            else {
-                RobotDrive.arcadeDrive(0, 0);
-                
-                timer.stop();
-                timer.reset();
-                TurningToTarmac = false;
-            }
-            
         }
         else if (TaxingToTarmac) {
             SmartDashboard.putString("Current Task", "Taxing to tarmac");
             if (timer.get() == 0) {
                 timer.start();
-                RobotDrive.arcadeDrive(-0.6, 0);
-                leftEncoder.reset();
-                rightEncoder.reset();
+                RobotDrive.arcadeDrive(-0.4, 0);
+                
             }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER > -9) {
-                RobotDrive.arcadeDrive(-0.6, 0);
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER > 0) {
+                RobotDrive.arcadeDrive(-0.4, 0);
             }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER < -9) {
+            else {
                 RobotDrive.arcadeDrive(0, 0);
                 timer.stop();
                 timer.reset();
                 TaxingToTarmac = false;
-                ShootingBall = true;
             }
         }
         else if (TurningToHub) {
@@ -479,8 +481,11 @@ public class Robot extends TimedRobot {
                 
                 
             }
-            else if (rightEncoder.get() < 300) {
-                RobotDrive.arcadeDrive(0, -0.5);
+            else if (hubAngleValue < 0 && rightEncoder.get()*DISTANCEMULTIPLIER > hubAngleValue) {
+                RobotDrive.arcadeDrive(0, 0.4);
+            }
+            else if (hubAngleValue > 0 && rightEncoder.getDistance()*DISTANCEMULTIPLIER < hubAngleValue) {
+                RobotDrive.arcadeDrive(0, -0.4);
             }
             else {
                 RobotDrive.arcadeDrive(0, 0);
@@ -488,46 +493,186 @@ public class Robot extends TimedRobot {
                 timer.stop();
                 timer.reset();
                 TurningToHub = false;
-            }
-        }
-        else if (TaxingToHub) {
-            SmartDashboard.putString("Current Task", "taxing to hub");
-            if (timer.get() == 0) {
-                leftEncoder.reset();
-                rightEncoder.reset();
-                timer.start();
-            }
-            else if (timer.get() < 1) {
-                RobotDrive.arcadeDrive(-0.4, 0);
-            }
-            else {
-                timer.stop();
-                timer.reset();
-                TaxingToHub = false;
                 ShootingBall = true;
             }
         }
-        else if (LeavingTarmac) {
-            SmartDashboard.putString("Current Task", "Leaving Tarmac");
-            SmartDashboard.putNumber("right encoder", rightEncoder.get() * DISTANCEMULTIPLIER);
+
+    }
+    else if (AutoNum == 5) {
+        if (ShootingBall) {
+            SmartDashboard.putString("Current Task", "Shooting");
             if (timer.get() == 0) {
                 timer.start();
-                RobotDrive.arcadeDrive(0.6, 0);
-                rightEncoder.reset();
-                leftEncoder.reset();
+                //Bumper1.set(-0.75);
+                LauncherFront.set(0.8);
+                LauncherBack.set(-0.8);
+                
+                
             }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 10) {
-                RobotDrive.arcadeDrive(0.6, 0);
+            else if (timer.get() > 1 && timer.get() < 1.5) {
+                Bumper1.set(-0.75);
             }
-            else if (rightEncoder.get()*DISTANCEMULTIPLIER > 10) {
+            else if (timer.get() > 3) {
+                LauncherFront.set(0);
+                LauncherBack.set(0);
+                Bumper1.set(0);
+                timer.stop();
+                timer.reset();
+                
+                
+                
+                ShootingBall = false;
+                
+                
+                if (colorSensor.getProximity() != 2047) {
+                    FixingBumper = true;
+                }
+            }
+        } 
+        else if (FixingBumper) {
+            if (colorSensor.getProximity() == 2047) {
+                FixingBumper = false;
+            }
+            else if (colorSensor.getProximity() > 100 && colorSensor.getProximity() < 200) {
+                Bumper1.set(0);
+            }
+            else if (colorSensor.getProximity() < 100) {
+                Bumper1.set(0.1);
+            }
+        }
+        else if (DroppingIntake) {
+            if (timer.get() == 0) {
+                timer.start();
+
+            }
+            else if (timer.get() < 0.5) {
+                RobotDrive.arcadeDrive(0.1, 0);
+            }
+            else if (timer.get() > 1.5) {
+                DroppingIntake = false;
+            }
+        }
+        
+        else if (TaxingToBall) {
+            SmartDashboard.putString("Current Task", "Taxing to Ball");
+            if (rightEncoder.get()*DISTANCEMULTIPLIER < 3.5) {
+                timer.start();
+                intake.set(0.75);
+                RobotDrive.arcadeDrive(0.4, 0);
+            }
+
+            else {
+                timer.stop();
+                timer.reset();
+                intake.set(0);
+                RobotDrive.arcadeDrive(0, 0);
+                TaxingToBall = false;
+            }
+        }
+        else if (TaxingToTarmac) {
+            SmartDashboard.putString("Current Task", "Taxing to tarmac");
+            if (timer.get() == 0) {
+                timer.start();
+                RobotDrive.arcadeDrive(-0.4, 0);
+                
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER > 0) {
+                RobotDrive.arcadeDrive(-0.4, 0);
+            }
+            else {
                 RobotDrive.arcadeDrive(0, 0);
                 timer.stop();
                 timer.reset();
-                LeavingTarmac = false;
+                TaxingToTarmac = false;
             }
         }
+        else if (TurningToHub) {
+            SmartDashboard.putString("Current Task", "Turning");
+            if (timer.get() == 0) {
+                timer.start();
+                leftEncoder.reset();
+                rightEncoder.reset();
+                
+                
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER > -50) {
+                RobotDrive.arcadeDrive(0, 0.4);
+            }
+
+            else {
+                RobotDrive.arcadeDrive(0, 0);
+                
+                timer.stop();
+                timer.reset();
+                TurningToHub = false;
+                ShootingBall = true;
+            }
+        }
+        else if (TurningToBall2) {
+            SmartDashboard.putString("Current Task", "Turning");
+            if (timer.get() == 0) {
+                timer.start();
+                leftEncoder.reset();
+                rightEncoder.reset();
+                
+                
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER > -300) {
+                RobotDrive.arcadeDrive(0, 0.4);
+            }
+
+            else {
+                RobotDrive.arcadeDrive(0, 0);
+                leftEncoder.reset();
+                rightEncoder.reset();
+                timer.stop();
+                timer.reset();
+                TurningToHub = false;
+                ShootingBall = true;
+            }
+
+        }
+        else if (TaxingToBall2) {
+            SmartDashboard.putString("Current Task", "Taxing to Ball");
+            if (rightEncoder.get()*DISTANCEMULTIPLIER < 7) {
+                timer.start();
+                intake.set(0.75);
+                RobotDrive.arcadeDrive(0.4, 0);
+            }
+
+            else {
+                timer.stop();
+                timer.reset();
+                intake.set(0);
+                RobotDrive.arcadeDrive(0, 0);
+                TaxingToBall = false;
+                TaxingToTarmac = true;
+            }
+        }
+        else if (TurningToHub2) {
+            SmartDashboard.putString("Current Task", "Turning");
+            if (timer.get() == 0) {
+                timer.start();
+                leftEncoder.reset();
+                rightEncoder.reset();
+                
+                
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER > 300) {
+                RobotDrive.arcadeDrive(0, -0.4);
+            }
+
+            else {
+                RobotDrive.arcadeDrive(0, 0);
+                
+                timer.stop();
+                timer.reset();
+                TurningToHub = false;
+                ShootingBall = true;
+            }
+        }
+
     }
-    
   }
   
 }
