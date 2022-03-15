@@ -73,7 +73,7 @@ public class Robot extends TimedRobot {
   PWMVictorSPX LauncherFront = new PWMVictorSPX(3);
   PWMVictorSPX LauncherBack = new PWMVictorSPX(4);
   PWMVictorSPX Bumper1 = new PWMVictorSPX(5);
-  PWMVictorSPX IntakeRecliner = new PWMVictorSPX(7);
+  //PWMVictorSPX IntakeRecliner = new PWMVictorSPX(7);
   CANSparkMax Climber = new CANSparkMax(1, MotorType.kBrushless);
   //PWMVictorSPX Climber = new PWMVictorSPX(9);
   Encoder leftEncoder = new Encoder(0, 1);
@@ -103,7 +103,7 @@ public class Robot extends TimedRobot {
   //intake, shooter, transfer
   @Override
   public void robotInit() {
-    //Climber.setIdleMode(IdleMode.kBrake);
+    Climber.setIdleMode(IdleMode.kBrake);
     CameraServer.startAutomaticCapture();
     AutoChooser.setDefaultOption("Do Nothing Option", DoNothingAuto);
     AutoChooser.addOption("Only leave tarmac", OnlyLeaveTarmac);
@@ -120,6 +120,7 @@ public class Robot extends TimedRobot {
   
   @Override
   public void teleopInit() {
+      //LauncherBack.set(0.5);
     //CameraServer.startAutomaticCapture();
 
     timer.reset();
@@ -145,8 +146,7 @@ public class Robot extends TimedRobot {
     //SmartDashboard.putNumber("timer", timer.get());
     //SmartDashboard.putNumber("leftEncoderValue", leftEncoder.get());
     //SmartDashboard.putNumber("rightEncoderValue", rightEncoder.get());
-    //SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER));
-    //SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
+    //SmartDashboard.putNumber("leftEncoderDistance", -1*(leftEncoder.get()*DISTANCEMULTIPLIER))   //SmartDashboard.putNumber("rightEncoderDistance", rightEncoder.get()*DISTANCEMULTIPLIER);
     //SmartDashboard.putNumber("Color Sensor Proximity", colorSensor.getProximity());
     
     //RobotDrive.arcadeDrive(0.9, 0);
@@ -173,10 +173,10 @@ public class Robot extends TimedRobot {
         
     }
     if (Joystick1.getRawButtonPressed(12)) {
-        IntakeRecliner.set(-0.4);
+        //IntakeRecliner.set(-0.4);
     }
     if (Joystick1.getRawButtonReleased(12)) {
-        IntakeRecliner.set(0);
+        //IntakeRecliner.set(0);
     }
     if (xboxController1.getRawButtonPressed(5)) {
         LauncherFront.set(0.50);
@@ -187,8 +187,8 @@ public class Robot extends TimedRobot {
         LauncherBack.set(0);
     }
     if (xboxController1.getRawButtonPressed(7)) {
-        LauncherFront.set(0.90);
-        LauncherBack.set(-0.90);
+        LauncherFront.set(0.80);
+        LauncherBack.set(-0.80);
     }
     if (xboxController1.getRawButtonReleased(7)) {
         LauncherFront.set(0);
@@ -213,7 +213,7 @@ public class Robot extends TimedRobot {
         Bumper1.set(0);
     }
     if (xboxController1.getRawButtonPressed(6)) {
-      Bumper1.set(0.25);
+      Bumper1.set(0.35);
     }
     if (xboxController1.getRawButtonReleased(6)) {
         Bumper1.set(0);
@@ -283,8 +283,9 @@ public class Robot extends TimedRobot {
         case 2:
         //SmartDashboard.putString("Ball Chosen", "B");
             ballAngleValue = -300;
+            TurningToTarmac = false;
             TurningToHub = true;
-            TaxingToHub = true;
+            //TaxingToHub = true;
             break;
         case 3:
         //SmartDashboard.putString("Ball Chosen", "C");
@@ -311,24 +312,24 @@ public class Robot extends TimedRobot {
             if (timer.get() == 0) {
                 timer.start();
                 //Bumper1.set(-0.75);
-                LauncherFront.set(0.9);
-                LauncherBack.set(-0.9);
+                LauncherFront.set(0.8);
+                LauncherBack.set(-0.8);
                 
             }
-            else if (timer.get() > 1 && timer.get() < 2) {
+            else if (timer.get() > 1 && timer.get() < 1.5) {
                 Bumper1.set(-0.75);
             }
-            else if (timer.get() > 2 && timer.get() < 3) {
+            else if (timer.get() > 1.5 && timer.get() < 2.5) {
                 LauncherFront.set(0);
                 LauncherBack.set(0);
                 Bumper1.set(0);
                 RobotDrive.arcadeDrive(0.4, 0);
             }
-            else if (timer.get() > 3 && timer.get() < 4) {
+            else if (timer.get() > 2.5 && timer.get() < 3) {
                 RobotDrive.arcadeDrive(0, 0);
                 
             }
-            else if (timer.get() > 4) {
+            else if (timer.get() > 3) {
                 timer.stop();
                 timer.reset();
                 ShootingBall = false;
@@ -372,7 +373,7 @@ public class Robot extends TimedRobot {
             }
             
         }
-        else if (TaxingToBall) {
+        else if (TaxingToBall && ballAngleValue != 65) {
             SmartDashboard.putString("Current Task", "Taxing to Ball");
             if (timer.get() == 0) {
                 timer.start();
@@ -386,6 +387,27 @@ public class Robot extends TimedRobot {
                 RobotDrive.arcadeDrive(0.3, 0);
             }
             else if (rightEncoder.get()*DISTANCEMULTIPLIER >= 8) {
+                timer.stop();
+                timer.reset();
+                intake.set(0);
+                RobotDrive.arcadeDrive(0, 0);
+                TaxingToBall = false;
+            }
+        }
+        else if (TaxingToBall && ballAngleValue == 65) {
+            SmartDashboard.putString("Current Task", "Taxing to Ball");
+            if (timer.get() == 0) {
+                timer.start();
+                RobotDrive.arcadeDrive(0.6, 0);
+                intake.set(-0.75);
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 5) {
+                RobotDrive.arcadeDrive(0.6, 0);
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER < 6) {
+                RobotDrive.arcadeDrive(0.3, 0);
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER >= 6) {
                 timer.stop();
                 timer.reset();
                 intake.set(0);
@@ -415,12 +437,12 @@ public class Robot extends TimedRobot {
                 rightEncoder.reset();
             }
             else if (hubAngleValue > 0 && rightEncoder.get() < hubAngleValue) {
-                RobotDrive.arcadeDrive(0, 0.5);
-            }
-            else if (hubAngleValue < 0 && rightEncoder.get() > hubAngleValue) {
                 RobotDrive.arcadeDrive(0, -0.5);
             }
-            else if (rightEncoder.get() < -10) {
+            else if (hubAngleValue < 0 && rightEncoder.get() > hubAngleValue) {
+                RobotDrive.arcadeDrive(0, 0.5);
+            }
+            else {
                 RobotDrive.arcadeDrive(0, 0);
                 
                 timer.stop();
@@ -475,22 +497,29 @@ public class Robot extends TimedRobot {
                 rightEncoder.reset();
                 timer.start();
             }
-            else if (rightEncoder.get() * DISTANCEMULTIPLIER > -0.5) {
+            else if (timer.get() < 1) {
                 RobotDrive.arcadeDrive(-0.4, 0);
             }
             else {
                 timer.stop();
                 timer.reset();
                 TaxingToHub = false;
+                ShootingBall = true;
             }
         }
         else if (LeavingTarmac) {
             SmartDashboard.putString("Current Task", "Leaving Tarmac");
+            SmartDashboard.putNumber("right encoder", rightEncoder.get() * DISTANCEMULTIPLIER);
             if (timer.get() == 0) {
                 timer.start();
                 RobotDrive.arcadeDrive(0.6, 0);
+                rightEncoder.reset();
+                leftEncoder.reset();
             }
             else if (rightEncoder.get()*DISTANCEMULTIPLIER < 10) {
+                RobotDrive.arcadeDrive(0.6, 0);
+            }
+            else if (rightEncoder.get()*DISTANCEMULTIPLIER > 10) {
                 RobotDrive.arcadeDrive(0, 0);
                 timer.stop();
                 timer.reset();
