@@ -92,10 +92,10 @@ public class Robot extends TimedRobot {
   //PWMVictorSPX Climber = new PWMVictorSPX(9);
   Encoder leftEncoder = new Encoder(0, 1);
   Encoder rightEncoder = new Encoder(2, 3);
-  ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kOnboard);
+  ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kMXP);
   boolean bumperRunning = false;
   Joystick Joystick1 = new Joystick(0);
-  //VictorSPX Tilter = new VictorSPX()
+  TalonSRX Tilter = new TalonSRX(7);
   XboxController xboxController1 = new XboxController(1);
   Timer timer = new Timer();
 
@@ -125,6 +125,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     Climber.setIdleMode(IdleMode.kBrake);
+    Tilter.setNeutralMode(NeutralMode.Brake);
     CameraServer.startAutomaticCapture();
     AutoChooser.setDefaultOption("Do Nothing Option", DoNothingAuto);
     AutoChooser.addOption("Only leave tarmac", OnlyLeaveTarmac);
@@ -239,6 +240,18 @@ public class Robot extends TimedRobot {
         Climber.set(-1);
     }
     if (xboxController1.getRawButtonReleased(2)) {
+        Climber.set(0);
+    }
+    if (xboxController1.getRawButtonPressed(1)) {
+        Tilter.set(ControlMode.PercentOutput, -0.2);
+    }
+    if (xboxController1.getRawButtonReleased(1)) {
+        Climber.set(0);
+    }
+    if (xboxController1.getRawButtonPressed(3)) {
+        Tilter.set(ControlMode.PercentOutput, 0.2);
+    }
+    if (xboxController1.getRawButtonReleased(3)) {
         Climber.set(0);
     }
     if (xboxController1.getRawButtonPressed(8)) {
@@ -419,8 +432,8 @@ public class Robot extends TimedRobot {
             
         }
         else if (LeavingTarmac) {
-            LauncherBack.set(ControlMode.PercentOutput, -LAUNCHERSPEEDHIGH);
-            LauncherFront.set(ControlMode.PercentOutput, LAUNCHERSPEEDHIGH);
+            //LauncherBack.set(ControlMode.PercentOutput, -LAUNCHERSPEEDHIGH);
+            //LauncherFront.set(ControlMode.PercentOutput, LAUNCHERSPEEDHIGH);
             intake.set(ControlMode.PercentOutput, INTAKESPEED);
             /*
             SmartDashboard.putString("Current Task", "leaving tarmac");
