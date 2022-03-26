@@ -243,13 +243,13 @@ public class Robot extends TimedRobot {
         Climber.set(0);
     }
     if (xboxController1.getRawButtonPressed(1)) {
-        Tilter.set(ControlMode.PercentOutput, -0.2);
+        Tilter.set(ControlMode.PercentOutput, -0.4);
     }
     if (xboxController1.getRawButtonReleased(1)) {
         Climber.set(0);
     }
     if (xboxController1.getRawButtonPressed(3)) {
-        Tilter.set(ControlMode.PercentOutput, 0.2);
+        Tilter.set(ControlMode.PercentOutput, 0.4);
     }
     if (xboxController1.getRawButtonReleased(3)) {
         Climber.set(0);
